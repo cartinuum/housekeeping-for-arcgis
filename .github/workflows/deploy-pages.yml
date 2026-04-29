@@ -1,0 +1,77 @@
+# Publishes the Vite build to GitHub Pages.
+#
+# ONE-TIME SETUP (required or deploy step returns HTTP 404):
+#   Repository → Settings → Pages → Build and deployment → Source: GitHub Actions
+#   (not “Deploy from a branch”). Save. Without this, deploy-pages cannot create a deployment.
+#
+# ORG REPOS: org admins may need to allow Actions-based Pages under org Settings → Actions → General.
+#
+# OAuth: register your deployed URL as an OAuth redirect URI for your ArcGIS app
+# (same origin as the site — HashRouter keeps redirects compatible).
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      # Project site: https://owner.github.io/repo/  → base /repo/
+      # User/org site repo named owner.github.io     → base /
+      - name: Set BASE_PATH for Vite
+        id: vite-base
+        run: |
+          NAME="${{ github.event.repository.name }}"
+          OWNER="${{ github.repository_owner }}"
+          if [ "$NAME" = "${OWNER}.github.io" ]; then
+            echo "path=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=/$NAME/" >> "$GITHUB_OUTPUT"
+          fi
+
+      - run: npm ci
+
+      - run: npm run build
+        env:
+          BASE_PATH: ${{ steps.vite-base.outputs.path }}
+          VITE_ARCGIS_CLIENT_ID: ${{ vars.VITE_ARCGIS_CLIENT_ID }}
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Explicit grants — required for OIDC / Pages API on some repos
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
