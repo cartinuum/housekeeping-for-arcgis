@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import { publicAssetUrl } from '../config'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../auth/useAuth'
 import type { UserInfo } from '../types/arcgis'
@@ -134,7 +135,7 @@ export function Navigation({ userInfo, onSignOut }: NavigationProps) {
         >
           <calcite-navigation-logo
             heading="Housekeeping for ArcGIS"
-            thumbnail="/logo.svg"
+            thumbnail={publicAssetUrl('logo.svg')}
             description="Housekeeping for ArcGIS"
           />
         </div>

@@ -1,5 +1,5 @@
 import { ArcGISIdentityManager } from '@esri/arcgis-rest-request'
-import { CLIENT_ID, REDIRECT_URI, PORTAL_URL } from '../config'
+import { CLIENT_ID, PORTAL_URL, publicAssetUrl, REDIRECT_URI } from '../config'
 
 export function SignInPage() {
   function handleSignIn() {
@@ -23,7 +23,7 @@ export function SignInPage() {
         gap: '1.5rem',
       }}
     >
-      <img src="/logo.svg" width={80} height={80} alt="" />
+      <img src={publicAssetUrl('logo.svg')} width={80} height={80} alt="" />
       <h1 style={{ margin: 0, fontFamily: 'var(--calcite-font-family)' }}>
         Housekeeping for ArcGIS
       </h1>

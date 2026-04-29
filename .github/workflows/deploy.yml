@@ -16,12 +16,23 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
+
+      - name: Set BASE_PATH for Vite
+        id: vite-base
+        run: |
+          NAME="${{ github.event.repository.name }}"
+          OWNER="${{ github.repository_owner }}"
+          if [ "$NAME" = "${OWNER}.github.io" ]; then
+            echo "path=/" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=/$NAME/" >> "$GITHUB_OUTPUT"
+          fi
 
       - run: npm ci
 
@@ -32,10 +43,10 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          GITHUB_PAGES_BASE: /housekeeping/
+          BASE_PATH: ${{ steps.vite-base.outputs.path }}
           VITE_ARCGIS_CLIENT_ID: ${{ vars.VITE_ARCGIS_CLIENT_ID }}
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
