@@ -49,6 +49,8 @@ debug-snapshot-*.md
 
 # Private planning and vendor reference docs
 depdendency_userstory.md
+copilot.md
+issues.md
 
 # Local testing scripts (Python/PowerShell) — not for commit
 test_*.py
