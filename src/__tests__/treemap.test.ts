@@ -7,6 +7,7 @@ function makeItem(overrides: Partial<ArcGISItem>): ArcGISItem {
     id: 'id1',
     title: 'Test',
     type: 'Web Map',
+    typeKeywords: [],
     size: 0,
     modified: Date.now(),
     thumbnail: null,

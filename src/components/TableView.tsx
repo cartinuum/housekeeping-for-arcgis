@@ -5,6 +5,7 @@ import { formatBytes } from '../utils/format'
 import { buildItemUrl } from '../utils/portalUrl'
 import { useAppStore } from '../store/useAppStore'
 import { BASKET_LIMIT } from './BasketPanel'
+import { resolveDisplayType, iconFor } from '../utils/itemIcons'
 
 type SortCol = 'title' | 'type' | 'credits' | 'size' | 'views' | 'modified' | 'owner'
 type SortDir = 'asc' | 'desc'
@@ -125,12 +126,11 @@ export function TableView({ items, typeColourMap }: TableViewProps) {
                 />
               </calcite-table-cell>
               <calcite-table-cell>{item.title}</calcite-table-cell>
-              {/* Type cell */}
+              {/* Type cell — shows resolved display type (e.g. "Tile Layer" for Map Service + Tiled) */}
               <calcite-table-cell>
                 {(() => {
-                  // Use the same colour as the treemap/chip legend for this type.
-                  // Falls back to a neutral grey if map not yet available or type unknown.
                   const colour = typeColourMap?.get(item.type) ?? '#595959'
+                  const displayType = resolveDisplayType(item.type, item.typeKeywords)
                   return (
                     <span style={{
                       display: 'inline-flex',
@@ -145,11 +145,9 @@ export function TableView({ items, typeColourMap }: TableViewProps) {
                       fontFamily: 'var(--calcite-font-family, Avenir Next, sans-serif)',
                       whiteSpace: 'nowrap',
                     }}>
-                      <span style={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        background: colour, flexShrink: 0,
-                      }} />
-                      {item.type}
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      <calcite-icon icon={iconFor(displayType) as any} scale="s" style={{ color: colour } as React.CSSProperties} />
+                      {displayType}
                     </span>
                   )
                 })()}

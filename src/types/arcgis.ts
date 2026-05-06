@@ -2,6 +2,7 @@ export interface ArcGISItem {
   id: string
   title: string
   type: string        // "Feature Service", "Web Map", "Notebook", etc.
+  typeKeywords: string[]  // raw typeKeywords array from the API — used to derive display type
   size: number        // bytes (−1 means unknown for some item types)
   modified: number    // epoch ms
   thumbnail: string | null

@@ -6,7 +6,7 @@ import type { TreemapGroupNode } from '../utils/treemap'
 import { itemCreditsPerMonth } from '../utils/credits'
 import { formatBytes, formatStaleness } from '../utils/format'
 import { buildItemUrl } from '../utils/portalUrl'
-import { iconFor } from '../utils/itemIcons'
+import { iconFor, resolveDisplayType } from '../utils/itemIcons'
 import { useAppStore } from '../store/useAppStore'
 import { BASKET_LIMIT } from './BasketPanel'
 
@@ -46,6 +46,7 @@ interface TooltipOverlayProps {
 function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: TooltipOverlayProps) {
   const credits = itemCreditsPerMonth(item)
   const { selectedIds, toggleSelectedId, portalHostname } = useAppStore()
+  const displayType = resolveDisplayType(item.type, item.typeKeywords)
   const itemUrl = buildItemUrl(portalHostname, item.id)
   const isSelected = selectedIds.includes(item.id)
   const basketFull = selectedIds.length >= BASKET_LIMIT
@@ -112,7 +113,7 @@ function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: Tool
             padding: 4, flexShrink: 0,
           }}
         >
-          {item.type}
+          {displayType}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.3, marginBottom: 6 }}>
@@ -125,8 +126,8 @@ function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: Tool
               display: 'inline-flex', alignItems: 'center', gap: 4,
             }}>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <calcite-icon icon={iconFor(item.type) as any} scale="s" style={{ color: '#fff' } as React.CSSProperties} />
-              {item.type}
+              <calcite-icon icon={iconFor(displayType) as any} scale="s" style={{ color: '#fff' } as React.CSSProperties} />
+              {displayType}
             </span>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 3,
