@@ -1,4 +1,4 @@
-import { calcCreditsPerMonth } from './credits'
+import { itemCreditsPerMonth } from './credits'
 import type { ArcGISItem } from '../types/arcgis'
 import type { Filters } from '../store/useAppStore'
 
@@ -21,10 +21,10 @@ export function applyFilters(items: ArcGISItem[], filters: Filters): ArcGISItem[
     result = result.filter(i => i.modified < cutoff)
   }
   if (filters.minCredits !== null && filters.minCredits > 0) {
-    result = result.filter(i => calcCreditsPerMonth(i.type, i.size) >= filters.minCredits!)
+    result = result.filter(i => itemCreditsPerMonth(i) >= filters.minCredits!)
   }
   if (filters.maxCredits !== null) {
-    result = result.filter(i => calcCreditsPerMonth(i.type, i.size) <= filters.maxCredits!)
+    result = result.filter(i => itemCreditsPerMonth(i) <= filters.maxCredits!)
   }
   return result
 }

@@ -72,11 +72,11 @@ interface AppStore {
 
 const DEFAULT_FILTERS: Filters = {
   types: [],
-  minSizeBytes: 10_485_760,  // 10 MB — hides small/zero-size items on load
-  maxSizeBytes: null,        // no upper bound by default
+  minSizeBytes: 5_242_880,   // 5 MB default — user can adjust to 0 if needed
+  maxSizeBytes: null,
   modifiedDaysAgo: null,
-  minCredits: null,          // no credit filter by default — size filter handles zero-value items
-  maxCredits: null,          // no upper bound by default
+  minCredits: null,
+  maxCredits: null,
 }
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -87,9 +87,9 @@ export const useAppStore = create<AppStore>((set) => ({
   setViewingUser: (username) => set({ viewingUser: username, viewScope: 'own', filters: DEFAULT_FILTERS, selectedIds: [] }),
 
   viewScope: 'own',
-  // Switching to org scope auto-selects Views — numViews is always accurate from the
-  // /search API, whereas size=-1 for hosted services makes storage/credits unreliable.
-  setViewScope: (scope) => set({ viewScope: scope }),
+  // Switching scope (own ↔ org) clears the basket — items from one scope have no
+  // meaning in the other. Also resets filters to avoid confusing empty states.
+  setViewScope: (scope) => set({ viewScope: scope, selectedIds: [], filters: DEFAULT_FILTERS }),
 
   activeView: 'treemap',
   setActiveView: (view) => set({ activeView: view }),

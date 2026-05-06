@@ -31,6 +31,15 @@ docs/superpowers
 # Test coverage
 coverage/
 
+# Playwright test artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
+/e2e/.auth/
+/e2e/
+playwright.config.ts
+
 # Playwright screenshots and debug artefacts
 test-*.png
 debug-*.png
@@ -49,6 +58,13 @@ debug-snapshot-*.md
 
 # Private planning and vendor reference docs
 depdendency_userstory.md
+copilot.md
+issues.md
+issues-old.md
+INVESTIGATION_org_sampling.md
+
+# Test credentials (NEVER commit)
+.test-credentials.md
 
 # Local testing scripts (Python/PowerShell) — not for commit
 test_*.py

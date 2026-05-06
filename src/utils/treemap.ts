@@ -1,4 +1,4 @@
-import { calcCreditsPerMonth } from './credits'
+import { itemCreditsPerMonth } from './credits'
 import type { ArcGISItem } from '../types/arcgis'
 import type { ActiveMetric } from '../store/useAppStore'
 
@@ -31,7 +31,7 @@ export interface TreemapGroupNode {
 export function itemValue(item: ArcGISItem, metric: ActiveMetric): number {
   if (metric === 'views') return item.numViews
   if (metric === 'size') return Math.max(0, item.size)
-  return calcCreditsPerMonth(item.type, item.size)
+  return itemCreditsPerMonth(item)
 }
 
 /**
@@ -101,7 +101,7 @@ export function buildTreemapData(
     return {
       name: item.title,
       value: Math.max(itemValue(item, metric), MIN_VALUE),
-      credits: calcCreditsPerMonth(item.type, item.size),
+      credits: itemCreditsPerMonth(item),
       item,
       itemStyle: inBasket
         ? { color: colour, borderColor: '#00d4aa', borderWidth: 3 }

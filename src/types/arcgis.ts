@@ -11,6 +11,10 @@ export interface ArcGISItem {
   owner: string
   numViews: number
   lastViewed?: number  // epoch ms — absent for items never viewed
+  // Actual measured credits/month from the org analytics endpoint.
+  // When present, prefer this over the heuristic calcCreditsPerMonth(type, size).
+  // Set only for items returned via the analytics path; absent for own-scope items.
+  analyticsCredits?: number
 }
 
 export interface UserInfo {

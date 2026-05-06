@@ -10,7 +10,7 @@ import {
   usageWindowsQueryOptions,
   extractServiceInfo,
 } from '../api/triageSignals'
-import { calcCreditsPerMonth } from '../utils/credits'
+import { itemCreditsPerMonth } from '../utils/credits'
 import type { ArcGISItem } from '../types/arcgis'
 
 interface BasketPanelProps {
@@ -99,7 +99,7 @@ export function BasketPanel({ items }: BasketPanelProps) {
   const isFull = selectedIds.length >= BASKET_LIMIT
 
   const totalCredits = selectedItems.reduce(
-    (sum, item) => sum + calcCreditsPerMonth(item.type, item.size),
+    (sum, item) => sum + itemCreditsPerMonth(item),
     0
   )
 

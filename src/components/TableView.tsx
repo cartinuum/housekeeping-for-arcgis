@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import type { ArcGISItem } from '../types/arcgis'
-import { calcCreditsPerMonth } from '../utils/credits'
+import { itemCreditsPerMonth } from '../utils/credits'
 import { formatBytes } from '../utils/format'
 import { buildItemUrl } from '../utils/portalUrl'
 import { useAppStore } from '../store/useAppStore'
@@ -26,7 +26,7 @@ function sortItems(items: ArcGISItem[], col: SortCol, dir: SortDir): ArcGISItem[
     let av: number | string
     let bv: number | string
     switch (col) {
-      case 'credits':  av = calcCreditsPerMonth(a.type, a.size); bv = calcCreditsPerMonth(b.type, b.size); break
+      case 'credits':  av = itemCreditsPerMonth(a); bv = itemCreditsPerMonth(b); break
       case 'size':     av = a.size;        bv = b.size;        break
       case 'views':    av = a.numViews;    bv = b.numViews;    break
       case 'modified': av = a.modified;    bv = b.modified;    break
@@ -103,7 +103,7 @@ export function TableView({ items, typeColourMap }: TableViewProps) {
         </calcite-table-row>
 
         {sorted.map(item => {
-          const credits = calcCreditsPerMonth(item.type, item.size)
+          const credits = itemCreditsPerMonth(item)
           const isSelected = selectedIds.includes(item.id)
           return (
             <calcite-table-row key={item.id} selected={isSelected || undefined}>

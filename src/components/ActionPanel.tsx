@@ -4,7 +4,7 @@ import { useQueries } from '@tanstack/react-query'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../auth/useAuth'
 import { ownerInfoQueryOptions } from '../api/triageSignals'
-import { calcCreditsPerMonth } from '../utils/credits'
+import { itemCreditsPerMonth } from '../utils/credits'
 import { navigateTo } from '../utils/navigation'
 import {
   buildEmailBody,
@@ -83,7 +83,7 @@ export function ActionPanel({ items }: ActionPanelProps) {
   const sortedOwners = [...grouped.keys()].sort((a, b) => {
     const total = (owner: string) =>
       (grouped.get(owner) ?? []).reduce(
-        (sum, item) => sum + calcCreditsPerMonth(item.type, item.size),
+        (sum, item) => sum + itemCreditsPerMonth(item),
         0
       )
     return total(b) - total(a)
@@ -198,8 +198,8 @@ export function ActionPanel({ items }: ActionPanelProps) {
           const ownerResult = ownerInfoMap.get(ownerUsername)
           const ownerItems = [...(grouped.get(ownerUsername) ?? [])].sort(
             (a, b) =>
-              calcCreditsPerMonth(b.type, b.size) -
-              calcCreditsPerMonth(a.type, a.size)
+              itemCreditsPerMonth(b) -
+              itemCreditsPerMonth(a)
           )
           const email = ownerResult?.data?.email ?? null
           const fullName = ownerResult?.data?.fullName ?? ownerUsername
@@ -315,7 +315,7 @@ export function ActionPanel({ items }: ActionPanelProps) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <tbody>
                   {ownerItems.map(item => {
-                    const credits = calcCreditsPerMonth(item.type, item.size)
+                    const credits = itemCreditsPerMonth(item)
                     return (
                       <tr
                         key={item.id}

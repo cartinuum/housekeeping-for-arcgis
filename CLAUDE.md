@@ -102,7 +102,7 @@ The review basket is a **persistent right-side panel** (using `calcite-shell-pan
 4. **Delete:** Phase 2 only. Phase 1 contains zero destructive API calls.
 5. **Auth:** Single public `clientId`. PKCE redirect flow (`popup: false`). No token in localStorage.
 6. **Hosting:** AWS S3 + CloudFront or Azure Static Web Apps. Custom domain. Public tool.
-7. **Org scope — user-sampling strategy:** `/search` returns `size: -1` for all hosted services (Feature Services, Map Services). Org mode uses `/portals/{orgId}/users?sortField=storageusage&sortOrder=desc` (admin endpoint) to find the top 50 storage users, then fetches each user's full content via `/content/users/{username}` which returns accurate sizes. Results are sorted by credits/mo descending, capped at 500.
+7. **Org scope — user-sampling strategy:** `/search` returns `size: -1` for all hosted services (Feature Services, Map Services). Org mode uses `/portals/{orgId}/users?sortField=storageusage&sortOrder=desc` (admin endpoint) to find the top 15 storage users, then fetches each user's full content via `/content/users/{username}` which returns accurate sizes. Results are sorted by credits/mo descending, capped at 800. Concurrency limited to 5 users at a time to respect API rate limits.
 
 ---
 
@@ -257,6 +257,18 @@ These are non-obvious behaviours discovered during implementation. Read before t
 - **`calcite-tooltip` referenceElement string ID is unreliable** when the anchor element is slotted inside a Calcite web component (e.g. inside `calcite-label`). Calcite tooltip's string ID lookup finds the element in the DOM but the hover listeners never attach correctly. Fix: always wire imperatively — use `ref` on both the tooltip and anchor, then set `tooltip.referenceElement = anchorEl` in a `useEffect`. Never rely on the string ID form for tooltips in this codebase.
 - **`calcite-icon` has `pointer-events: none`** in its shadow CSS. Do not put a `calcite-tooltip` referenceElement ID directly on a `calcite-icon` — hover events will never fire. Wrap the icon in a `<span>` and put the ref/ID on the span instead.
 - **ECharts treemap `label` vs `upperLabel`:** With `leafDepth` set, ECharts uses `upperLabel` for parent/group nodes (the coloured header strip) and `label` only for leaf nodes. Without an explicit `upperLabel` config on the group level, type-name labels never render on group tiles. Always configure both.
+- **Profile ring alignment in emulation mode:** Wrapper div around avatar must have `borderRadius: '50%'`, `lineHeight: 0`, and if using `calcite-avatar` fallback, wrap it in a circular div with `overflow: hidden` to prevent subpixel misalignment of the dashed border.
+
+### Scope switching behaviour (2026-05-05)
+
+When switching between Own ↔ Org scope, three things must happen atomically in `setViewScope`:
+1. **Clear basket** — `selectedIds: []` — items from one scope have no meaning in another
+2. **Reset filters** — `filters: DEFAULT_FILTERS` — prevents empty state confusion when org has different content distribution
+3. **Update scope** — `viewScope: scope`
+
+This is implemented in `useAppStore.ts`. Do NOT try to handle basket clearing in a `useEffect` watching `viewScope` — that creates a one-render delay where the basket briefly shows stale items.
+
+**Rationale:** Basket items are tied to content scope. A Feature Service in Own mode and a similarly-named service in Org mode are different items with different IDs. Preserving selections across scope switches causes confusion and potential misidentification.
 
 ### Triage signals — FIXED (2026-04-20)
 
@@ -291,7 +303,9 @@ Owner info, sparkline, and dependency counts all resolve correctly on `/review`.
 - **`/content/users/{username}`:** Returns accurate sizes for all item types including hosted Feature Services. This is the correct endpoint for credit analysis. Fetches root + folders; see `userContent.ts` for the folder-iteration pattern.
 - **Org user listing (admin):** Use `/portals/{orgId}/users` with `pnum` (not `num`), supports `sortField=storageusage`. Returns `.users` array. Do NOT use `/community/users` for this — that is a text search API, returns `.results`, and does not support storage sorting.
 - **Org user text search:** `/community/users?q=orgid:{orgId} {searchTerm}` — freetext within org. Field-specific wildcard (`fullname:ben*`) is not reliably supported.
-- **Org content — user-sampling strategy:** Fetch top 50 users by `storageusage` desc, then fetch each user's full content via `/content/users/{username}`. Throttle at 5 concurrent user fetches. Flatten, sort by credits/mo desc, cap at 500. See `src/api/orgContent.ts`.
+- **Sort fields are silently ignored.** `/portals/{orgId}/users` accepts only `fullName`, `username`, `firstName`, `lastName`, `created`, `modified` as sort fields. Any other value (including `storageUsage`, `lastLogin`) is silently dropped and the endpoint falls back to default ordering. Same permissive-but-broken pattern as `/search` returning `size: -1` for hosted services. Do not trust ArcGIS REST API parameter validation — verify sort behaviour empirically.
+- **Org analytics endpoint (undocumented):** `GET /sharing/rest/portals/self/analytics/topn?type=stg&groupBy=item&period=3m&startTime={epochMs}` returns the org's top 100 items by credit consumption. Confirmed working from `localhost:5173` and `www.arcgis.com` as the base (CORS is not a blocker). **Not in the public REST API** — subject to change without notice. Always wrap in graceful-degradation fallback. `startTime` must be **UTC midnight on the 1st of a month** — arbitrary timestamps return HTTP 400. Compute with `Date.UTC(year, month - 3, 1)`, not `new Date()` + `setHours(0,0,0,0)` (which gives local midnight, rejected by the server for non-UTC timezones).
+- **Org content — user-sampling strategy:** Fetch top 50 users by `storageusage` desc, then fetch each user's full content via `/content/users/{username}`. Throttle at 5 concurrent user fetches. Flatten, sort by credits/mo desc, cap at 500. See `src/api/orgContent.ts`. **Superseded by the analytics endpoint above — this strategy is the fallback path only.**
 - **Pagination:** Use `nextStart` cursor — loop until `nextStart === -1`.
 - **Item usage endpoint:** `/sharing/rest/portals/{orgId}/usage` with `vars=num`, `startTime`/`endTime` as epoch ms, `period=1d`, `resourceId={itemId}`. 60-day maximum block per request. Returns `[[timestamp, count], ...]` rows.
 - **Related items:** `/content/items/{id}/relatedItems?relationshipType=<type>&direction=forward|reverse`. Use `Map2Service`, `WMA2Code`, `Survey2Service` etc. for common dependencies.
