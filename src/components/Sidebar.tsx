@@ -330,7 +330,7 @@ export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, o
               if (hasMin && hasMax) return `${filters.minCredits!.toFixed(1)} – ${filters.maxCredits!.toFixed(1)} cr/mo`
               if (hasMin) return `\u2265 ${filters.minCredits!.toFixed(1)} cr/mo`
               if (hasMax) return `\u2264 ${filters.maxCredits!.toFixed(1)} cr/mo`
-              return 'No filter'
+              return `No filter — range 0 to ${(maxCredits || 100).toFixed(0)} cr/mo`
             })()}
           </div>
         </calcite-label>

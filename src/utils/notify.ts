@@ -3,6 +3,7 @@ import { buildItemUrl } from './portalUrl'
 
 export const EMAIL_SUBJECT = 'ArcGIS Online content review'
 export const MAILTO_MAX_LENGTH = 1800
+export const APP_URL = 'https://cartinuum.github.io/housekeeping-for-arcgis'
 
 export function buildEmailBody(
   items: Pick<ArcGISItem, 'id' | 'title'>[],
@@ -34,6 +35,8 @@ export function buildEmailBody(
     'ownership. Reply to this email if you have any questions.',
     '',
     adminFullName,
+    '',
+    `Sent via Housekeeping for ArcGIS — ${APP_URL}`,
   ].join('\n')
 }
 
@@ -66,6 +69,8 @@ export function buildBatchEmailBody(
     'ownership. Reply to this email if you have any questions.',
     '',
     adminFullName,
+    '',
+    `Sent via Housekeeping for ArcGIS — ${APP_URL}`,
   ].join('\n')
 }
 

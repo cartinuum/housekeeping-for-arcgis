@@ -78,8 +78,10 @@ export function BasketPanel({ items }: BasketPanelProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { session } = useAuth()
-  const { selectedIds, toggleSelectedId, orgId } = useAppStore()
+  const { selectedIds, toggleSelectedId, setSelectedIds, orgId } = useAppStore()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
+  const clearRef = useRef<HTMLCalciteActionElement>(null)
   const collapseActionRef = useRef<HTMLCalciteActionElement>(null)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const shellPanelRef = useRef<any>(null)
@@ -150,7 +152,16 @@ export function BasketPanel({ items }: BasketPanelProps) {
         heading={`Review basket (${selectedIds.length})`}
         style={{ height: '100%', minWidth: '260px' } as React.CSSProperties}
       >
-        {/* Minimise button in panel header */}
+        {/* Header actions: clear all + minimise */}
+        <calcite-action
+          ref={clearRef}
+          slot="header-actions-end"
+          icon="trash"
+          text="Clear all"
+          label="Clear all items from basket"
+          scale="s"
+          onClick={() => setConfirmClear(true)}
+        />
         <calcite-action
           ref={collapseActionRef}
           slot="header-actions-end"
@@ -161,6 +172,28 @@ export function BasketPanel({ items }: BasketPanelProps) {
         />
 
         <div style={{ padding: '0.5rem', overflowY: 'auto' }}>
+          {confirmClear && (
+            <calcite-notice kind="warning" open style={{ marginBottom: '0.5rem' }}>
+              <span slot="message">Remove all {selectedIds.length} items from the basket?</span>
+              <calcite-button
+                slot="actions-end"
+                kind="danger"
+                scale="s"
+                onClick={() => { setSelectedIds([]); setConfirmClear(false) }}
+              >
+                Clear all
+              </calcite-button>
+              <calcite-button
+                slot="actions-end"
+                appearance="outline"
+                scale="s"
+                onClick={() => setConfirmClear(false)}
+              >
+                Cancel
+              </calcite-button>
+            </calcite-notice>
+          )}
+
           {isFull && (
             <calcite-notice kind="warning" open style={{ marginBottom: '0.5rem' }}>
               <span slot="message">

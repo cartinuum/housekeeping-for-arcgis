@@ -164,35 +164,41 @@ function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: Tool
       </div>
 
       {/* Footer: action buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button
-            onClick={() => (isSelected || canAdd) && toggleSelectedId(item.id)}
-            title={!isSelected && !canAdd ? `Basket full (${BASKET_LIMIT} items max)` : undefined}
-            style={{
-              background: isSelected ? '#338033' : canAdd ? '#595959' : '#3a3a3a',
-              border: 'none', borderRadius: 4,
-              color: isSelected || canAdd ? '#fff' : '#888',
-              cursor: isSelected || canAdd ? 'pointer' : 'not-allowed',
-              padding: '5px 10px',
-              fontSize: 12, fontFamily: 'inherit',
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-            }}
-          >
-            {isSelected ? '✓ In basket' : '+ Review'}
-          </button>
-          <button
-            onClick={() => window.open(itemUrl, '_blank', 'noopener,noreferrer')}
-            style={{
-              background: '#0079c1', border: 'none', borderRadius: 4,
-              color: '#fff', cursor: 'pointer', padding: '5px 10px',
-              fontSize: 12, fontFamily: 'inherit',
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-            }}
-          >
-            ↗ Open
-          </button>
-        </div>
+      <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+        <button
+          onClick={() => (isSelected || canAdd) && toggleSelectedId(item.id)}
+          title={!isSelected && !canAdd ? `Basket full (${BASKET_LIMIT} items max)` : undefined}
+          style={{
+            flex: 1,
+            background: isSelected ? '#338033' : canAdd ? '#595959' : '#3a3a3a',
+            border: 'none', borderRadius: 4,
+            color: isSelected || canAdd ? '#fff' : '#888',
+            cursor: isSelected || canAdd ? 'pointer' : 'not-allowed',
+            padding: '7px 10px',
+            fontSize: 12, fontFamily: 'inherit',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+          }}
+        >
+          {isSelected ? '✓ In basket' : '+ Add to basket'}
+        </button>
+        <button
+          onClick={() => window.open(itemUrl, '_blank', 'noopener,noreferrer')}
+          title="Open in ArcGIS Online"
+          style={{
+            flex: 1,
+            background: '#0079c1',
+            border: '2px solid #005e95',
+            borderRadius: 4,
+            color: '#fff', cursor: 'pointer', padding: '7px 10px',
+            fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
+          }}
+        >
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          <calcite-icon icon={"launch" as any} scale="s" style={{ color: '#fff', flexShrink: 0 } as React.CSSProperties} />
+          Open in ArcGIS
+        </button>
       </div>
     </div>
   )
