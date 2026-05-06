@@ -92,15 +92,22 @@ export function Dashboard({ items, orgTotal }: DashboardProps) {
     )
   }, [filteredExceptTypes, typeColourMap])
 
-  // Total bytes per type for chip size labels
-  const typeSizeMap = useMemo(() => {
+  // Per-type totals for the chip legend label — value semantics match the active metric:
+  //   credits → total credits/mo (sum of itemCreditsPerMonth)
+  //   size    → total bytes (sum of item.size, clamped to 0)
+  //   views   → total view count
+  const typeValueMap = useMemo(() => {
     const map = new Map<string, number>()
     for (const item of filteredExceptTypes) {
-      const bytes = Math.max(0, item.size)
-      map.set(item.type, (map.get(item.type) ?? 0) + bytes)
+      const v = effectiveMetric === 'credits'
+        ? itemCreditsPerMonth(item)
+        : effectiveMetric === 'size'
+        ? Math.max(0, item.size)
+        : item.numViews
+      map.set(item.type, (map.get(item.type) ?? 0) + v)
     }
     return map
-  }, [filteredExceptTypes])
+  }, [filteredExceptTypes, effectiveMetric])
 
   // Top items for treemap — sorted by effective metric, capped for ECharts performance.
   // Table always receives the full filtered set.
@@ -133,7 +140,7 @@ export function Dashboard({ items, orgTotal }: DashboardProps) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Toolbar />
-      <ChipLegend typeColourMap={visibleTypeColourMap} typeSizeMap={typeSizeMap} />
+      <ChipLegend typeColourMap={visibleTypeColourMap} typeValueMap={typeValueMap} />
 
       {/* Org scope context */}
       {viewScope === 'org' && activeView === 'treemap' && (

@@ -2,11 +2,12 @@ import { useState, useRef } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { OTHER_COLOUR } from '../utils/treemap'
 import { iconFor } from '../utils/itemIcons'
+import type { ActiveMetric } from '../store/useAppStore'
 
 interface ChipLegendProps {
   typeColourMap: Map<string, string>
-  /** Total bytes per type (from pre-type-filter data) — drives the size label in each chip */
-  typeSizeMap: Map<string, number>
+  /** Per-type totals matching the active metric (credits/mo, bytes, or views). */
+  typeValueMap: Map<string, number>
 }
 
 // Credit storage rates shown in the hover tip
@@ -27,13 +28,19 @@ function hexToRgb(hex: string): string {
   return `${r}, ${g}, ${b}`
 }
 
-function formatSize(bytes: number): string {
-  if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GB`
-  if (bytes >= 1_048_576) return `${Math.round(bytes / 1_048_576)} MB`
-  return `${Math.round(bytes / 1024)} KB`
+function formatChipValue(value: number, metric: ActiveMetric): string {
+  if (metric === 'credits') {
+    if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k cr/mo`
+    return `${value.toFixed(value < 10 ? 1 : 0)} cr/mo`
+  }
+  if (metric === 'views') return value.toLocaleString() + ' views'
+  // size (bytes)
+  if (value >= 1_073_741_824) return `${(value / 1_073_741_824).toFixed(1)} GB`
+  if (value >= 1_048_576) return `${Math.round(value / 1_048_576)} MB`
+  return `${Math.round(value / 1024)} KB`
 }
 
-export function ChipLegend({ typeColourMap, typeSizeMap }: ChipLegendProps) {
+export function ChipLegend({ typeColourMap, typeValueMap }: ChipLegendProps) {
   const { filters, setFilters, activeMetric } = useAppStore()
   const [visibleTip, setVisibleTip] = useState<string | null>(null)
   const tipTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -104,7 +111,7 @@ export function ChipLegend({ typeColourMap, typeSizeMap }: ChipLegendProps) {
     const selected = !noneSelected && filters.types.includes(typeName)
     const dimmed = !noneSelected && !selected
     const rgb = hexToRgb(colour)
-    const sizeBytes = typeSizeMap.get(typeName) ?? 0
+    const typeValue = typeValueMap.get(typeName) ?? 0
 
     return (
       <div key={typeName} style={{ position: 'relative' }}>
@@ -136,8 +143,8 @@ export function ChipLegend({ typeColourMap, typeSizeMap }: ChipLegendProps) {
             scale="s"
             style={{ color: (noneSelected || selected) ? '#fff' : colour } as React.CSSProperties}
           />
-          {sizeBytes > 0 && (
-            <span style={{ fontWeight: 700 }}>{formatSize(sizeBytes)}</span>
+          {typeValue > 0 && (
+            <span style={{ fontWeight: 700 }}>{formatChipValue(typeValue, activeMetric)}</span>
           )}
           {typeName}
         </button>
@@ -178,7 +185,7 @@ export function ChipLegend({ typeColourMap, typeSizeMap }: ChipLegendProps) {
         const otherSelected = !noneSelected && otherHasFilter
         const otherDimmed = !noneSelected && !otherHasFilter
         const rgb = hexToRgb(OTHER_COLOUR)
-        const otherSizeBytes = otherTypeNames.reduce((sum, t) => sum + (typeSizeMap.get(t) ?? 0), 0)
+        const otherValue = otherTypeNames.reduce((sum, t) => sum + (typeValueMap.get(t) ?? 0), 0)
 
         return (
           <button
@@ -207,8 +214,8 @@ export function ChipLegend({ typeColourMap, typeSizeMap }: ChipLegendProps) {
               scale="s"
               style={{ color: (noneSelected || otherSelected) ? '#fff' : OTHER_COLOUR } as React.CSSProperties}
             />
-            {otherSizeBytes > 0 && (
-              <span style={{ fontWeight: 700 }}>{formatSize(otherSizeBytes)}</span>
+            {otherValue > 0 && (
+              <span style={{ fontWeight: 700 }}>{formatChipValue(otherValue, activeMetric)}</span>
             )}
             Other
           </button>
