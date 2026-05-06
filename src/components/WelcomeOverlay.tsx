@@ -102,7 +102,7 @@ export function WelcomeOverlay({ username, canEmulate }: WelcomeOverlayProps) {
               How it works
             </div>
 
-            {[
+            {(canEmulate ? [
               {
                 num: '1',
                 title: 'Inventory',
@@ -118,7 +118,18 @@ export function WelcomeOverlay({ username, canEmulate }: WelcomeOverlayProps) {
                 title: 'Action',
                 body: 'Compose pre-filled notification emails for content owners. Buttons open your default mail client — nothing is sent automatically.',
               },
-            ].map(step => (
+            ] : [
+              {
+                num: '1',
+                title: 'Inventory',
+                body: 'See your content as a treemap — tiles sized by credit cost or storage. Identify items that may be consuming credits or creating management burden.',
+              },
+              {
+                num: '2',
+                title: 'Review',
+                body: 'Select items for closer inspection. Review activity, staleness, and dependency signals to decide what to keep, update, or remove.',
+              },
+            ]).map(step => (
               <div key={step.num} style={{
                 display: 'flex',
                 gap: 12,

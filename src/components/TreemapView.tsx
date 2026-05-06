@@ -1,9 +1,9 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import type { ECElementEvent, CallbackDataParams } from 'echarts/types/dist/shared'
 import type { ArcGISItem } from '../types/arcgis'
 import type { TreemapGroupNode } from '../utils/treemap'
-import { calcCreditsPerMonth } from '../utils/credits'
+import { itemCreditsPerMonth } from '../utils/credits'
 import { formatBytes, formatStaleness } from '../utils/format'
 import { buildItemUrl } from '../utils/portalUrl'
 import { iconFor } from '../utils/itemIcons'
@@ -44,7 +44,7 @@ interface TooltipOverlayProps {
 }
 
 function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: TooltipOverlayProps) {
-  const credits = calcCreditsPerMonth(item.type, item.size)
+  const credits = itemCreditsPerMonth(item)
   const { selectedIds, toggleSelectedId, portalHostname } = useAppStore()
   const itemUrl = buildItemUrl(portalHostname, item.id)
   const isSelected = selectedIds.includes(item.id)
@@ -310,7 +310,7 @@ export function TreemapView({ groups }: TreemapViewProps) {
     if (depth <= 1) setIsDrilled(false)
   }, [])
 
-  const option = {
+  const option = useMemo(() => ({
     backgroundColor: 'transparent',
     series: [
       {
@@ -367,18 +367,13 @@ export function TreemapView({ groups }: TreemapViewProps) {
           formatter: (params: CallbackDataParams) => {
             const data = params.data as TreemapNodeData & { credits?: number }
             if (!data?.item) return '' // group tiles handled by upperLabel
-            // Leaf tile — show metric value.
-            // Return '' for tiles below a minimum threshold: ECharts 'truncate'
-            // drops the unit suffix on tiny tiles ("1 MB" → "1"), which is
-            // more misleading than no label. Hiding is the lesser evil.
             const val = params.value as number
-            if (val <= 0.01) return '' // MIN_VALUE floor — free items
+            if (val < 0.01) return '' // below MIN_VALUE floor — truly empty items
+            
             if (activeMetric === 'size') {
-              if (val < 5_242_880) return '' // < 5 MB — tile too small for a unit label
-              return formatBytes(val)
+              return formatBytes(val === 0.01 ? data.item.size : val)
             }
             const credits = data.credits ?? val
-            if (credits < 0.5) return '' // < 0.5 cr/mo — tile too small
             return `${credits.toFixed(1)} cr/mo`
           },
           overflow: 'truncate',
@@ -395,7 +390,7 @@ export function TreemapView({ groups }: TreemapViewProps) {
       },
     ],
     tooltip: { show: false },
-  }
+  }), [groups, isDrilled, activeMetric]) // Re-create option when these change
 
   return (
     <>

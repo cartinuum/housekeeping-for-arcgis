@@ -122,8 +122,7 @@ function AppShell() {
           canEmulate={canEmulate}
           onEmulateUser={setViewingUser}
           orgTotal={orgScopeActive ? (orgData?.total ?? items.length) : undefined}
-          orgTruncated={orgScopeActive ? (orgData?.truncated ?? false) : undefined}
-          orgUsersScanned={orgScopeActive ? (orgData?.usersScanned ?? 0) : undefined}
+          orgDataSource={orgScopeActive ? orgData?.source : undefined}
         />
       )}
 

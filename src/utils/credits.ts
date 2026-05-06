@@ -1,3 +1,15 @@
+import type { ArcGISItem } from '../types/arcgis'
+
+/**
+ * Returns the best available credits/month estimate for an item.
+ * Prefers analyticsCredits (actual measured consumption from the org analytics endpoint)
+ * over the heuristic when available. Use this everywhere you have an ArcGISItem.
+ */
+export function itemCreditsPerMonth(item: ArcGISItem): number {
+  if (item.analyticsCredits != null) return item.analyticsCredits
+  return calcCreditsPerMonth(item.type, item.size)
+}
+
 /**
  * Estimates ArcGIS Online storage credits per month for an item.
  * Rates sourced from: https://doc.arcgis.com/en/arcgis-online/administer/credits.htm

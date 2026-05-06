@@ -24,10 +24,10 @@ export function SignInPage() {
       }}
     >
       <img src={publicAssetUrl('logo.svg')} width={80} height={80} alt="" />
-      <h1 style={{ margin: 0, fontFamily: 'var(--calcite-font-family)' }}>
+      <h1 style={{ margin: 0, fontFamily: 'var(--calcite-font-family)', textAlign: 'center' }}>
         Housekeeping for ArcGIS
       </h1>
-      <p style={{ margin: 0, color: 'var(--calcite-color-text-3)' }}>
+      <p style={{ margin: 0, color: 'var(--calcite-color-text-3)', textAlign: 'center' }}>
         A simple tool to help tidy up your Web GIS
       </p>
       <calcite-button

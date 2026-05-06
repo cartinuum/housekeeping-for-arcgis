@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../auth/useAuth'
-import { calcCreditsPerMonth } from '../utils/credits'
+import { itemCreditsPerMonth } from '../utils/credits'
 import { TriageStrip } from './TriageStrip'
 import type { ArcGISItem } from '../types/arcgis'
 
@@ -52,7 +52,7 @@ export function ReviewPanel({ items }: ReviewPanelProps) {
     .filter((i): i is ArcGISItem => i !== undefined)
 
   const sorted = [...selectedItems].sort((a, b) =>
-    calcCreditsPerMonth(b.type, b.size) - calcCreditsPerMonth(a.type, a.size)
+    itemCreditsPerMonth(b) - itemCreditsPerMonth(a)
   )
 
   return (

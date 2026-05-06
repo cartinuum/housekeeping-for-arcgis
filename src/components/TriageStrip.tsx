@@ -4,7 +4,7 @@ import type { ArcGISIdentityManager } from '@esri/arcgis-rest-request'
 import type { ArcGISItem, RelatedItemRef } from '../types/arcgis'
 import { useAppStore } from '../store/useAppStore'
 import { useTriageSignals, useWebMapDependenciesPhase3 } from '../api/triageSignals'
-import { calcCreditsPerMonth } from '../utils/credits'
+import { itemCreditsPerMonth } from '../utils/credits'
 import { formatStaleness } from '../utils/format'
 import { buildItemUrl } from '../utils/portalUrl'
 import { iconFor } from '../utils/itemIcons'
@@ -296,7 +296,7 @@ export function TriageStrip({ item, session, reason, onReasonChange }: TriageStr
   // Auto-suggest reason for admins on first signal load — only if no reason is set yet.
   useEffect(() => {
     if (!isAdmin || !onReasonChange || reason || hasAutoSuggested.current) return
-    const credits = calcCreditsPerMonth(item.type, item.size)
+    const credits = itemCreditsPerMonth(item)
     const suggested = suggestReason(item, credits)
     if (suggested) {
       hasAutoSuggested.current = true
@@ -312,7 +312,7 @@ export function TriageStrip({ item, session, reason, onReasonChange }: TriageStr
     el.value = reason ?? ''
   }, [reason])
 
-  const credits = calcCreditsPerMonth(item.type, item.size)
+  const credits = itemCreditsPerMonth(item)
   const accessLabel: Record<string, string> = {
     public: 'Public', org: 'Organisation', private: 'Private',
   }

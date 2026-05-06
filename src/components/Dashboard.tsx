@@ -1,7 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useAppStore } from '../store/useAppStore'
 import { buildTreemapData, buildTypeColourMap, itemValue } from '../utils/treemap'
-import { calcCreditsPerMonth } from '../utils/credits'
+import { itemCreditsPerMonth } from '../utils/credits'
 import { applyFilters } from '../utils/filters'
 import { Toolbar } from './Toolbar'
 import { ChipLegend } from './ChipLegend'
@@ -43,21 +43,34 @@ function applyFiltersExceptTypes(items: ArcGISItem[], filters: Filters): ArcGISI
     result = result.filter(i => i.modified < cutoff)
   }
   if (filters.minCredits !== null && filters.minCredits > 0) {
-    result = result.filter(i => calcCreditsPerMonth(i.type, i.size) >= filters.minCredits!)
+    result = result.filter(i => itemCreditsPerMonth(i) >= filters.minCredits!)
   }
   if (filters.maxCredits !== null) {
-    result = result.filter(i => calcCreditsPerMonth(i.type, i.size) <= filters.maxCredits!)
+    result = result.filter(i => itemCreditsPerMonth(i) <= filters.maxCredits!)
   }
   return result
 }
 
 export function Dashboard({ items, orgTotal }: DashboardProps) {
-  const { activeView, activeMetric, filters, viewScope, selectedIds } = useAppStore()
+  const { activeView, activeMetric, filters, viewScope, selectedIds, setFilters } = useAppStore()
 
   const effectiveMetric = activeMetric
   const cap = treemapCap(viewScope)
 
   const filtered = useMemo(() => applyFilters(items, filters), [items, filters])
+
+  // Auto-adjust size filter if no items pass the current minimum
+  useEffect(() => {
+    // Only adjust if:
+    // - We have items to display
+    // - minSizeBytes is set (not null)
+    // - Filtered result is empty
+    // - Types filter is empty (user hasn't manually deselected all types)
+    if (items.length > 0 && filters.minSizeBytes !== null && filtered.length === 0 && filters.types.length === 0) {
+      console.log(`[Dashboard] No items ≥ ${filters.minSizeBytes} bytes — resetting minSizeBytes to null`)
+      setFilters({ minSizeBytes: null })
+    }
+  }, [items.length, filters.minSizeBytes, filters.types.length, filtered.length, setFilters])
 
   // Items after all filters except types — used to determine which chips to show.
   const filteredExceptTypes = useMemo(

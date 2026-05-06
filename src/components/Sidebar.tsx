@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { useAppStore } from '../store/useAppStore'
 import type { ArcGISItem, UserInfo } from '../types/arcgis'
 import type { ViewScope } from '../store/useAppStore'
-import { calcCreditsPerMonth } from '../utils/credits'
+import type { OrgDataSource } from '../api/orgAnalytics'
+import { itemCreditsPerMonth } from '../utils/credits'
 import { formatBytes } from '../utils/format'
 import { useOrgUsers } from '../api/orgUsers'
 import { useAuth } from '../auth/useAuth'
@@ -21,7 +22,7 @@ function friendlyRole(role: string): string {
 }
 
 // Non-linear size steps — slider value is the index (0–8), not bytes directly.
-const SIZE_STEPS_MB = [1, 5, 10, 25, 50, 100, 250, 500, 1024]
+const SIZE_STEPS_MB = [5, 10, 25, 50, 100, 250, 500, 1024, 2048]
 const SIZE_MAX_IDX = SIZE_STEPS_MB.length - 1
 
 function mbToBytes(mb: number): number {
@@ -63,11 +64,10 @@ interface SidebarProps {
   canEmulate: boolean      // has portal:admin:viewUsers privilege
   onEmulateUser?: (username: string) => void
   orgTotal?: number        // true org item count from lightweight /search (org scope only)
-  orgTruncated?: boolean   // true when combined items exceeded the 500-item cap
-  orgUsersScanned?: number // number of users sampled (org scope only)
+  orgDataSource?: OrgDataSource // which data path was used — 'analytics' | 'fallback-storage'
 }
 
-export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, orgTotal, orgTruncated, orgUsersScanned }: SidebarProps) {
+export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, orgTotal, orgDataSource }: SidebarProps) {
   const { filters, setFilters, activeMetric, viewingUser, viewScope, setViewScope } = useAppStore()
   const { session } = useAuth()
 
@@ -78,7 +78,7 @@ export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, o
 
   // Derived values needed by slider effects — must be declared before the effects.
   const maxCredits = Math.ceil(
-    items.reduce((max, i) => Math.max(max, calcCreditsPerMonth(i.type, i.size)), 0)
+    items.reduce((max, i) => Math.max(max, itemCreditsPerMonth(i)), 0)
   )
 
   // Wire up size range slider (both handles)
@@ -156,7 +156,7 @@ export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, o
   }, [setViewScope])
 
   const totalCredits = items.reduce(
-    (sum, item) => sum + calcCreditsPerMonth(item.type, item.size),
+    (sum, item) => sum + itemCreditsPerMonth(item),
     0
   )
   const totalStorageBytes = items.reduce(
@@ -181,9 +181,10 @@ export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, o
             {/* Emulation mode: dashed warning ring indicates this is an emulated user, not the signed-in admin */}
             <div style={{
               borderRadius: '50%',
-              padding: viewingUser ? '3px' : 0,
+              padding: viewingUser ? 4 : 0,
               border: viewingUser ? '2px dashed var(--calcite-color-status-warning)' : 'none',
               display: 'inline-block',
+              lineHeight: 0,
             }}>
               {avatarUrl ? (
                 <img
@@ -195,7 +196,9 @@ export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, o
                   onError={() => setAvatarError(true)}
                 />
               ) : (
-                <calcite-avatar scale="l" fullName={userInfo.fullName} />
+                <div style={{ borderRadius: '50%', overflow: 'hidden', lineHeight: 0 }}>
+                  <calcite-avatar scale="l" fullName={userInfo.fullName} />
+                </div>
               )}
             </div>
 
@@ -229,7 +232,7 @@ export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, o
               }}>
                 <div style={{ fontWeight: 700, fontSize: 15 }}>
                   {viewScope === 'org'
-                    ? (orgTotal ?? items.length).toLocaleString() + (orgTruncated ? '+' : '')
+                    ? (orgTotal ?? items.length).toLocaleString()
                     : items.length.toLocaleString()}
                 </div>
                 <div style={{ fontSize: 10, color: 'var(--calcite-color-text-3)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Items</div>
@@ -257,13 +260,18 @@ export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, o
             </div>
           </div>
 
-          {/* Org scope: sampling strategy context */}
+          {/* Org scope: data source context */}
           {viewScope === 'org' && (
-            <calcite-notice kind="info" open scale="s" style={{ marginTop: '0.5rem' }}>
+            <calcite-notice
+              kind={orgDataSource === 'fallback-storage' ? 'warning' : 'info'}
+              open
+              scale="s"
+              style={{ marginTop: '0.5rem' }}
+            >
               <span slot="message">
-                Sampling top {orgUsersScanned ?? 50} users by storage.
-                Showing {items.length.toLocaleString()} items sorted by credits/mo
-                {orgTruncated ? ' (capped at 500)' : ''}.
+                {orgDataSource === 'fallback-storage'
+                  ? `Top ${items.length.toLocaleString()} items by storage. Credit data unavailable — using estimated values.`
+                  : `Top ${items.length.toLocaleString()} items by credit consumption (last 3 months).`}
               </span>
             </calcite-notice>
           )}
