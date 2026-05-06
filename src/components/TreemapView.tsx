@@ -52,8 +52,8 @@ function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: Tool
   const basketFull = selectedIds.length >= BASKET_LIMIT
   const canAdd = isSelected || !basketFull
 
-  const thumbUrl = item.thumbnail
-    ? `https://www.arcgis.com/sharing/rest/content/items/${encodeURIComponent(item.id)}/info/${item.thumbnail}`
+  const thumbUrl = item.thumbnail && portalHostname
+    ? `https://${portalHostname}/sharing/rest/content/items/${encodeURIComponent(item.id)}/info/${item.thumbnail}`
     : null
 
   // Position: offset right and slightly up from cursor; clamp to viewport edges

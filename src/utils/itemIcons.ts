@@ -1,21 +1,22 @@
 // Map ArcGIS item type names (including resolved display types) to Calcite icon names.
+// All icon names have been validated against @esri/calcite-ui-icons icon registry.
 // Raw API type → icon is used for treemap group tiles and chip legend.
 // Resolved display type → icon is used in table pills and treemap hover tooltips.
 export const TYPE_ICONS: Record<string, string> = {
   // --- Feature Services ---
   'Feature Service':      'feature-layer',
   'Feature Layer':        'feature-layer',
-  'Feature Table':        'table',         // Feature Service + "Table" typeKeyword
-  'Route Layer':          'route-layer',
-  'Utility Network':      'network-diagram',
+  'Feature Table':        'table',            // Feature Service + "Table" typeKeyword
+  'Route Layer':          'layer-route',
+  'Utility Network':      'layers',
 
   // --- Map Services ---
-  'Map Service':          'map-service',   // generic fallback (dynamic map image layer)
-  'Map Image Layer':      'map-service',   // resolved: Map Service without Tiled keyword
-  'Tile Layer':           'layer-basemap', // resolved: Map Service + "Tiled" typeKeyword
-  'WMS':                  'map',
-  'WFS':                  'map',
-  'WMTS':                 'map',
+  'Map Service':          'layer-map-service', // generic (group tiles in treemap)
+  'Map Image Layer':      'layer-map-service', // resolved: Map Service without Tiled keyword
+  'Tile Layer':           'layer-basemap',     // resolved: Map Service + "Tiled" typeKeyword
+  'WMS':                  'layer-wms',
+  'WFS':                  'layer-wfs',
+  'WMTS':                 'layer-wms',         // closest available
 
   // --- Image / Raster ---
   'Image Service':        'image-layer',
@@ -37,20 +38,21 @@ export const TYPE_ICONS: Record<string, string> = {
   'Web Experience':       'apps',
   'Web AppBuilder':       'apps',
   'Instant App':          'apps',
-  'Form':                 'form',
+  'Web Mapping Application': 'apps',
 
   // --- Data / Documents ---
   'Notebook':             'code',
   'Survey123 Form':       'survey',
   'Table':                'table',
-  'CSV':                  'table',
-  'Microsoft Excel':      'table',
-  'GeoJSON':              'polygon',
-  'KML':                  'globe',
-  'Shapefile':            'data-file',
-  'File Geodatabase':     'data-file',
-  'Service Definition':   'services',
-  'Code Attachment':      'code',
+  'CSV':                  'file-csv',
+  'Microsoft Excel':      'file-excel',
+  'GeoJSON':              'layer-geojson',
+  'KML':                  'layer-kml',
+  'Shapefile':            'file-shape',
+  'File Geodatabase':     'file-data',
+  'SQLite Geodatabase':   'file-sqlite',
+  'Service Definition':   'file-archive',
+  'Code Attachment':      'file-code',
 
   // --- Fallback ---
   'Other':                'apps',
@@ -72,7 +74,6 @@ export function resolveDisplayType(type: string, typeKeywords: string[]): string
     if (typeKeywords.includes('Utility Network')) return 'Utility Network'
   }
   if (type === 'Web Mapping Application') return 'Web App'
-  if (type === 'Web Experience') return 'Web Experience'
   return type
 }
 

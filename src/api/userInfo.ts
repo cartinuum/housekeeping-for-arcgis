@@ -33,13 +33,22 @@ export function useUserInfo(
   })
 }
 
-/** Fetches /portals/self to get the org's portal hostname for item URL construction. */
+/** Fetches /portals/self to get the org's portal hostname for item URL construction.
+ *
+ * The /portals/self response does not always include a `portalHostname` field.
+ * Fall back to constructing the hostname from `urlKey` + `customBaseUrl`
+ * (e.g. urlKey="bgt-pj", customBaseUrl="maps.arcgis.com" → "bgt-pj.maps.arcgis.com").
+ * This ensures items open in the user's org context rather than www.arcgis.com.
+ */
 export function usePortalSelf(session: ArcGISIdentityManager | null) {
   return useQuery<string | null>({
     queryKey: ['portalSelf'],
     queryFn: async () => {
       const data = await request(`${PORTAL_URL}/portals/self`, { authentication: session! })
-      return (data.portalHostname as string) ?? null
+      if (data.portalHostname) return data.portalHostname as string
+      const urlKey = data.urlKey as string | undefined
+      const customBaseUrl = (data.customBaseUrl as string) ?? 'maps.arcgis.com'
+      return urlKey ? `${urlKey}.${customBaseUrl}` : null
     },
     enabled: !!session,
     staleTime: Infinity, // org hostname never changes during a session
