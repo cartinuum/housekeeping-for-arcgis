@@ -198,7 +198,7 @@ function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: Tool
 }
 
 export function TreemapView({ groups }: TreemapViewProps) {
-  const { activeMetric, selectedIds, toggleSelectedId } = useAppStore()
+  const { activeMetric, selectedIds, toggleSelectedId, portalHostname } = useAppStore()
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [isDrilled, setIsDrilled] = useState(false)
   // Delay closing so mouse can move from tile into overlay without it vanishing
@@ -291,11 +291,18 @@ export function TreemapView({ groups }: TreemapViewProps) {
   function handleClick(params: TreemapEventParams) {
     const item: ArcGISItem | undefined = params.data?.item
     if (item) {
-      // Leaf tile — toggle basket membership.
-      // Basket-full guard: only add if there's room (removing is always allowed).
-      const isSelected = selectedIds.includes(item.id)
-      if (isSelected || selectedIds.length < BASKET_LIMIT) {
-        toggleSelectedId(item.id)
+      const nativeEvent = params.event?.event as MouseEvent | undefined
+      if (nativeEvent?.ctrlKey || nativeEvent?.metaKey) {
+        // Ctrl/Cmd+click — open item in ArcGIS Online directly, bypassing the tooltip
+        const itemUrl = buildItemUrl(portalHostname, item.id)
+        window.open(itemUrl, '_blank', 'noopener,noreferrer')
+      } else {
+        // Plain click — toggle basket membership.
+        // Basket-full guard: only add if there's room (removing is always allowed).
+        const isSelected = selectedIds.includes(item.id)
+        if (isSelected || selectedIds.length < BASKET_LIMIT) {
+          toggleSelectedId(item.id)
+        }
       }
     } else {
       // Group node — user is drilling into a type group
