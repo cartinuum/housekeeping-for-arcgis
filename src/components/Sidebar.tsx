@@ -143,7 +143,10 @@ export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, o
   }, [filters.minCredits, filters.maxCredits, maxCredits])
 
 
-  // Wire scope segmented control
+  // Wire scope segmented control.
+  // viewingUser is in the deps because the control is conditionally rendered
+  // (isAdmin && !viewingUser) — when emulation starts/stops the DOM element is
+  // replaced, so we must re-attach the listener each time it reappears.
   useEffect(() => {
     const el = scopeControlRef.current
     if (!el) return
@@ -153,7 +156,7 @@ export function Sidebar({ userInfo, items, isAdmin, canEmulate, onEmulateUser, o
     }
     el.addEventListener('calciteSegmentedControlChange', handler)
     return () => el.removeEventListener('calciteSegmentedControlChange', handler)
-  }, [setViewScope])
+  }, [setViewScope, viewingUser])
 
   const totalCredits = items.reduce(
     (sum, item) => sum + itemCreditsPerMonth(item),

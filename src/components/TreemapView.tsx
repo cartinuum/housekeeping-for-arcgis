@@ -320,6 +320,10 @@ export function TreemapView({ groups }: TreemapViewProps) {
 
   const option = useMemo(() => ({
     backgroundColor: 'transparent',
+    // Instant data updates — prevents white-gap flash that appears when all tiles
+    // transition simultaneously (semi-transparent tiles over white gapWidth lines).
+    // Hover/drill animations are unaffected (they use animationDuration).
+    animationDurationUpdate: 0,
     series: [
       {
         type: 'treemap',
