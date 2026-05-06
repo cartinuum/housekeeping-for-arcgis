@@ -6,6 +6,7 @@ const BASE_ITEM: ArcGISItem = {
   id: 'test-1',
   title: 'Test Item',
   type: 'Web Map',
+  typeKeywords: [],
   size: 1_048_576,
   modified: Date.now(),
   thumbnail: null,

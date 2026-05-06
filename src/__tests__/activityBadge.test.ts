@@ -9,6 +9,7 @@ function makeItem(overrides: Partial<ArcGISItem> = {}): ArcGISItem {
     id: 'test-id',
     title: 'Test Item',
     type: 'Feature Service',
+    typeKeywords: [],
     size: 1_048_576,
     modified: NOW - 30 * 86_400_000,
     thumbnail: null,

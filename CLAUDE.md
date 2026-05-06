@@ -230,6 +230,19 @@ Phase 2 fetches **upstream and downstream counts only** (1 level deep). This is 
 | Dep fetch kept at 1 level | `src/api/triageSignals.ts` — 2-level expansion reverted; "direct only" sublabel added to DepSection in TriageStrip |
 | Dual-ended range sliders | `src/components/Sidebar.tsx` — `minValue`/`maxValue` on both sliders; `useAppStore.ts` — `maxCredits`/`maxSizeBytes` in Filters; `filters.ts` + `Dashboard.tsx` — upper-bound filtering added |
 
+### 2026-05-06 session (P1 fixes + UX polish)
+
+| What | Key files |
+|---|---|
+| P1: Org analytics endpoint | `src/api/orgAnalytics.ts` (new) — primary path uses undocumented `/portals/self/analytics/topn?type=stg`; fetches top 100 items by credit consumption, then enriches via `/content/items/{id}`. `analyticsCredits` field added to `ArcGISItem`. `orgContent.ts` rewritten as thin wrapper. Fallback to user-sampling preserved. |
+| `itemCreditsPerMonth()` helper | `src/utils/credits.ts` — returns `analyticsCredits` if present, else heuristic `calcCreditsPerMonth`. All callers migrated from the raw heuristic. |
+| Ctrl/Cmd+click treemap | `src/components/TreemapView.tsx` — Ctrl/Cmd+click opens item in AGOL; plain click toggles basket. Reads `params.event?.event` as native `MouseEvent`. |
+| Chip legend metric-aware totals | `src/components/Dashboard.tsx` — `typeValueMap` (credits/bytes/views per type, from `filteredExceptTypes`). `src/components/ChipLegend.tsx` — `formatChipValue(value, metric)` renders correct unit. Prop renamed `typeSizeMap` → `typeValueMap`. |
+| Owner column in org table view | `src/components/TableView.tsx` — `showOwner = viewScope === 'org' && !viewingUser`; sortable Owner column hidden in own/emulation scope. |
+| Item display type resolution | `src/types/arcgis.ts` — `typeKeywords: string[]` added. `src/api/mapItem.ts` — captures `typeKeywords` from API. `src/utils/itemIcons.ts` — `resolveDisplayType(type, typeKeywords)` derives display label (e.g. Map Service + Tiled → "Tile Layer"). `TYPE_ICONS` expanded for all derived types. Table type pill: `<calcite-icon>` replaces dot, colour-matched to group, shows resolved label. Treemap tooltip badge: resolved type + icon. Treemap grouping stays on raw `item.type`. |
+| Scope toggle listener re-attach | `src/components/Sidebar.tsx` — added `viewingUser` to `useEffect` deps for `calciteSegmentedControlChange`. The control is conditionally rendered (`isAdmin && !viewingUser`), so emulation start/stop replaces the DOM element; without `viewingUser` in deps the new element had no listener. |
+| Treemap whitespace flash fix | `src/components/TreemapView.tsx` — `animationDurationUpdate: 0` on ECharts option. The flash was semi-transparent tiles over white `gapWidth` lines during ECharts' default 300ms layout transition on data update. |
+
 ---
 
 ## Technical Discoveries
@@ -320,6 +333,8 @@ Owner info, sparkline, and dependency counts all resolve correctly on `/review`.
 - **Sparkline rendering:** Use ECharts `line` series with `showSymbol: false`, no axes, no grid padding, `animation: false`. Target width ~80px, height ~24px. Render empty state (dashed horizontal line + "No activity") when all values are 0.
 - **Treemap container sizing:** `calcite-shell` CSS grid settles ~100ms after page load; chip legend and toolbar also shift layout as AGOL content loads (~7s). Do NOT use `onChartReady` alone for initial resize — ECharts initialises at the wrong width. Fix: wrap `ReactECharts` in a `ref`'d div and observe it with `ResizeObserver` (fires on every layout shift); also call `resize()` in a 400ms `onChartReady` timeout as a fallback. Do NOT observe `instance.getDom()` — ECharts holds that element at a fixed size and the observer never re-fires.
 - **Item thumbnails:** `/sharing/rest/content/items/{id}/info/{thumbnail}` serves thumbnails without auth (no `?token=` needed). Always handle `onError` with a visible fallback (type icon in a neutral box) — some items have a `thumbnail` field set but the file does not exist on the server.
+- **ECharts treemap data-update flash:** When all tile values change simultaneously (e.g. metric switch), ECharts' default 300ms `animationDurationUpdate` animates the layout transition. Semi-transparent tiles over white `gapWidth` lines create a visible white-space flash. Fix: set `animationDurationUpdate: 0` in the series option for instant data updates. Hover/drill animations (`animationDuration`) are unaffected.
+- **Calcite segmented control — listener lost on conditional render:** If a `calcite-segmented-control` is conditionally rendered (e.g. `isAdmin && !viewingUser`), entering/leaving the condition unmounts and recreates the DOM element. A `useEffect` wired with `el.addEventListener` only attaches to the element present at the time the effect ran. If the element is removed and recreated, the new element has no listener unless the effect re-runs. Fix: include any variable that controls the conditional rendering in the `useEffect` dependency array (e.g. `[setViewScope, viewingUser]`).
 
 ---
 

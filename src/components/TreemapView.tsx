@@ -6,7 +6,7 @@ import type { TreemapGroupNode } from '../utils/treemap'
 import { itemCreditsPerMonth } from '../utils/credits'
 import { formatBytes, formatStaleness } from '../utils/format'
 import { buildItemUrl } from '../utils/portalUrl'
-import { iconFor } from '../utils/itemIcons'
+import { iconFor, resolveDisplayType } from '../utils/itemIcons'
 import { useAppStore } from '../store/useAppStore'
 import { BASKET_LIMIT } from './BasketPanel'
 
@@ -46,13 +46,14 @@ interface TooltipOverlayProps {
 function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: TooltipOverlayProps) {
   const credits = itemCreditsPerMonth(item)
   const { selectedIds, toggleSelectedId, portalHostname } = useAppStore()
+  const displayType = resolveDisplayType(item.type, item.typeKeywords)
   const itemUrl = buildItemUrl(portalHostname, item.id)
   const isSelected = selectedIds.includes(item.id)
   const basketFull = selectedIds.length >= BASKET_LIMIT
   const canAdd = isSelected || !basketFull
 
-  const thumbUrl = item.thumbnail
-    ? `https://www.arcgis.com/sharing/rest/content/items/${encodeURIComponent(item.id)}/info/${item.thumbnail}`
+  const thumbUrl = item.thumbnail && portalHostname
+    ? `https://${portalHostname}/sharing/rest/content/items/${encodeURIComponent(item.id)}/info/${item.thumbnail}`
     : null
 
   // Position: offset right and slightly up from cursor; clamp to viewport edges
@@ -112,7 +113,7 @@ function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: Tool
             padding: 4, flexShrink: 0,
           }}
         >
-          {item.type}
+          {displayType}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 600, fontSize: 14, lineHeight: 1.3, marginBottom: 6 }}>
@@ -125,8 +126,8 @@ function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: Tool
               display: 'inline-flex', alignItems: 'center', gap: 4,
             }}>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <calcite-icon icon={iconFor(item.type) as any} scale="s" style={{ color: '#fff' } as React.CSSProperties} />
-              {item.type}
+              <calcite-icon icon={iconFor(displayType) as any} scale="s" style={{ color: '#fff' } as React.CSSProperties} />
+              {displayType}
             </span>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 3,
@@ -198,7 +199,7 @@ function TooltipOverlay({ item, colour, x, y, onMouseEnter, onMouseLeave }: Tool
 }
 
 export function TreemapView({ groups }: TreemapViewProps) {
-  const { activeMetric, selectedIds, toggleSelectedId } = useAppStore()
+  const { activeMetric, selectedIds, toggleSelectedId, portalHostname } = useAppStore()
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [isDrilled, setIsDrilled] = useState(false)
   // Delay closing so mouse can move from tile into overlay without it vanishing
@@ -291,11 +292,18 @@ export function TreemapView({ groups }: TreemapViewProps) {
   function handleClick(params: TreemapEventParams) {
     const item: ArcGISItem | undefined = params.data?.item
     if (item) {
-      // Leaf tile — toggle basket membership.
-      // Basket-full guard: only add if there's room (removing is always allowed).
-      const isSelected = selectedIds.includes(item.id)
-      if (isSelected || selectedIds.length < BASKET_LIMIT) {
-        toggleSelectedId(item.id)
+      const nativeEvent = params.event?.event as MouseEvent | undefined
+      if (nativeEvent?.ctrlKey || nativeEvent?.metaKey) {
+        // Ctrl/Cmd+click — open item in ArcGIS Online directly, bypassing the tooltip
+        const itemUrl = buildItemUrl(portalHostname, item.id)
+        window.open(itemUrl, '_blank', 'noopener,noreferrer')
+      } else {
+        // Plain click — toggle basket membership.
+        // Basket-full guard: only add if there's room (removing is always allowed).
+        const isSelected = selectedIds.includes(item.id)
+        if (isSelected || selectedIds.length < BASKET_LIMIT) {
+          toggleSelectedId(item.id)
+        }
       }
     } else {
       // Group node — user is drilling into a type group
@@ -312,6 +320,10 @@ export function TreemapView({ groups }: TreemapViewProps) {
 
   const option = useMemo(() => ({
     backgroundColor: 'transparent',
+    // Instant data updates — prevents white-gap flash that appears when all tiles
+    // transition simultaneously (semi-transparent tiles over white gapWidth lines).
+    // Hover/drill animations are unaffected (they use animationDuration).
+    animationDurationUpdate: 0,
     series: [
       {
         type: 'treemap',

@@ -5,6 +5,7 @@ export function mapItem(raw: Record<string, unknown>): ArcGISItem {
     id: raw.id as string,
     title: raw.title as string,
     type: raw.type as string,
+    typeKeywords: Array.isArray(raw.typeKeywords) ? (raw.typeKeywords as string[]) : [],
     size: (raw.size as number) ?? -1,
     modified: raw.modified as number,
     thumbnail: (raw.thumbnail as string) ?? null,

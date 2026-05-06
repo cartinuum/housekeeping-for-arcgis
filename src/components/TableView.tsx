@@ -5,8 +5,9 @@ import { formatBytes } from '../utils/format'
 import { buildItemUrl } from '../utils/portalUrl'
 import { useAppStore } from '../store/useAppStore'
 import { BASKET_LIMIT } from './BasketPanel'
+import { resolveDisplayType, iconFor } from '../utils/itemIcons'
 
-type SortCol = 'title' | 'type' | 'credits' | 'size' | 'views' | 'modified'
+type SortCol = 'title' | 'type' | 'credits' | 'size' | 'views' | 'modified' | 'owner'
 type SortDir = 'asc' | 'desc'
 
 interface TableViewProps {
@@ -32,6 +33,7 @@ function sortItems(items: ArcGISItem[], col: SortCol, dir: SortDir): ArcGISItem[
       case 'modified': av = a.modified;    bv = b.modified;    break
       case 'title':    av = a.title.toLowerCase();  bv = b.title.toLowerCase();  break
       case 'type':     av = a.type.toLowerCase();   bv = b.type.toLowerCase();   break
+      case 'owner':    av = a.owner.toLowerCase();  bv = b.owner.toLowerCase();  break
     }
     if (av < bv) return dir === 'asc' ? -1 : 1
     if (av > bv) return dir === 'asc' ? 1 : -1
@@ -72,7 +74,8 @@ function SortableHeader({ heading, col, sortCol, sortDir, onSort }: SortableHead
 export function TableView({ items, typeColourMap }: TableViewProps) {
   const [sortCol, setSortCol] = useState<SortCol>('credits')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
-  const { selectedIds, toggleSelectedId, portalHostname } = useAppStore()
+  const { selectedIds, toggleSelectedId, portalHostname, viewScope, viewingUser } = useAppStore()
+  const showOwner = viewScope === 'org' && !viewingUser
 
   const handleSort = useCallback((col: SortCol) => {
     setSortCol(prev => {
@@ -95,6 +98,7 @@ export function TableView({ items, typeColourMap }: TableViewProps) {
           <calcite-table-header heading="" style={{ width: '36px' }} />
           <SortableHeader heading="Title"      col="title"    sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
           <SortableHeader heading="Type"       col="type"     sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
+          {showOwner && <SortableHeader heading="Owner" col="owner" sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />}
           <SortableHeader heading="Credits/mo" col="credits"  sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
           <SortableHeader heading="Size"       col="size"     sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
           <SortableHeader heading="Views"      col="views"    sortCol={sortCol} sortDir={sortDir} onSort={handleSort} />
@@ -122,11 +126,11 @@ export function TableView({ items, typeColourMap }: TableViewProps) {
                 />
               </calcite-table-cell>
               <calcite-table-cell>{item.title}</calcite-table-cell>
+              {/* Type cell — shows resolved display type (e.g. "Tile Layer" for Map Service + Tiled) */}
               <calcite-table-cell>
                 {(() => {
-                  // Use the same colour as the treemap/chip legend for this type.
-                  // Falls back to a neutral grey if map not yet available or type unknown.
                   const colour = typeColourMap?.get(item.type) ?? '#595959'
+                  const displayType = resolveDisplayType(item.type, item.typeKeywords)
                   return (
                     <span style={{
                       display: 'inline-flex',
@@ -141,15 +145,14 @@ export function TableView({ items, typeColourMap }: TableViewProps) {
                       fontFamily: 'var(--calcite-font-family, Avenir Next, sans-serif)',
                       whiteSpace: 'nowrap',
                     }}>
-                      <span style={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        background: colour, flexShrink: 0,
-                      }} />
-                      {item.type}
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      <calcite-icon icon={iconFor(displayType) as any} scale="s" style={{ color: colour } as React.CSSProperties} />
+                      {displayType}
                     </span>
                   )
                 })()}
               </calcite-table-cell>
+              {showOwner && <calcite-table-cell>{item.owner}</calcite-table-cell>}
               <calcite-table-cell>
                 <span style={{
                   color: credits >= 40
