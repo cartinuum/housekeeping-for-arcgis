@@ -1,6 +1,6 @@
 {
   "name": "housekeeping-for-arcgis",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Content intelligence and review tool for ArcGIS Online administrators and users",
   "license": "Apache-2.0",
   "author": "Cartinuum",
