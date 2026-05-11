@@ -1,0 +1,84 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Git worktrees
+.worktrees
+
+# AI tooling (local IDE config and agent state — not for humans)
+.claude/
+.superpowers/
+docs/design
+docs/research
+docs/superpowers
+!docs/screenshots/*.png
+CLAUDE.md
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+
+# Playwright test artifacts
+/test-results/
+/playwright-report/
+/playwright/.cache/
+/blob-report/
+/e2e/.auth/
+/e2e/
+playwright.config.ts
+
+# Playwright screenshots and debug artefacts
+test-*.png
+debug-*.png
+smoke-*.png
+treemap-debug-*.png
+debug-snapshot-*.md
+*.png
+.playwright-mcp/
+
+!docs/screenshots/*.png
+
+
+# Root-level build artefacts that belong in public/
+/favicon.ico
+/logo.svg
+
+# Private planning and vendor reference docs
+depdendency_userstory.md
+copilot.md
+issues.md
+issues-old.md
+INVESTIGATION_org_sampling.md
+
+# Test credentials (NEVER commit)
+.test-credentials.md
+
+# Local testing scripts (Python/PowerShell) — not for commit
+test_*.py
+test-*.ps1
+verify_*.py
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
